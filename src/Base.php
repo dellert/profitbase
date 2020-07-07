@@ -21,18 +21,20 @@ class Base
     protected function __construct($options)
     {
         try {
-            if (!empty($options["API_KEY"]) && isset($options["API_KEY"]) && is_string($options["API_KEY"])) {
-                $this->API_KEY = $options["API_KEY"];
+            if (!empty($options['API_KEY']) && isset($options['API_KEY']) && is_string($options['API_KEY'])) {
+                $this->API_KEY = $options['API_KEY'];
             } else {
                 throw new Exception('ProfitBase connection error. API key is not defined');
             }
-            if (!empty($options["API_URL"]) && isset($options["API_URL"]) && is_string($options["API_URL"])) {
-                $this->API_URL = $options["API_URL"];
+
+            if (!empty($options['API_URL']) && isset($options['API_URL']) && is_string($options['API_URL'])) {
+                $this->API_URL = $options['API_URL'];
             } else {
                 throw new Exception('ProfitBase connection error. API url is not defined');
             }
-            if (!empty($options["AUTH_JSON_PATH"]) && isset($options["AUTH_JSON_PATH"])) {
-                $this->AUTH_JSON_PATH = $options["AUTH_JSON_PATH"];
+
+            if (!empty($options['AUTH_JSON_PATH']) && isset($options['AUTH_JSON_PATH'])) {
+                $this->AUTH_JSON_PATH = $options['AUTH_JSON_PATH'];
             } else {
                 throw new Exception('ProfitBase connection error. API authorize data path is not defined');
             }
@@ -49,9 +51,9 @@ class Base
         $tokenData = file_get_contents($authorizeDataFile);
         $tokenDataDecoded = json_decode($tokenData, true);
 
-        if (!empty($tokenDataDecoded["remaining_time"]) && date('U') - $tokenDataDecoded["time_of_receive"] < $tokenDataDecoded["remaining_time"]) {
+        if (!empty($tokenDataDecoded['remaining_time']) && date('U') - $tokenDataDecoded['time_of_receive'] < $tokenDataDecoded['remaining_time']) {
             return $tokenDataDecoded['access_token'];
-        }  // If access token time is up
+        } // If access token time is up
         else {
             $response = $this->postQueryTo('/authentication', [
                 'type'        => 'api-app',
@@ -61,29 +63,28 @@ class Base
             ], false);
 
             $tokenDataDecoded = $response;
-            $tokenDataDecoded["time_of_receive"] = date('U');
+            $tokenDataDecoded['time_of_receive'] = date('U');
             $tokenDataEncoded = json_encode($tokenDataDecoded);
-            $tokenDataResource = fopen($authorizeDataFile, "w");
+            $tokenDataResource = fopen($authorizeDataFile, 'w');
             fwrite($tokenDataResource, $tokenDataEncoded);
             fclose($tokenDataResource);
 
             if (!empty($tokenDataDecoded['access_token'])) {
                 return $tokenDataDecoded['access_token'];
             }
+
+            return false;
         }
     }
 
     protected function getQueryTo($href, array $params = [], $requiresToken = true)
     {
-        try {
-            if (!isset($href) || empty($href)) {
-                throw new Exception('ProfitBase query error. Href is not defined');
-            }
-        } catch (Exception $e) {
-            echo $e->getMessage();
+        if (!isset($href) || empty($href)) {
+            throw new Exception('ProfitBase query error. Href is not defined');
         }
 
         $query = [];
+
         if ($requiresToken) {
             $query["access_token"] = $this->getToken();
         }
@@ -118,19 +119,15 @@ class Base
 
     protected function postQueryTo($href, array $params = [], $requiresToken = true)
     {
-        try {
-            if (!isset($href) || empty($href)) {
-                throw new Exception('ProfitBase query error. Href is not defined');
-            }
-        } catch (Exception $e) {
-            echo $e->getMessage();
+        if (!isset($href) || empty($href)) {
+            throw new Exception('ProfitBase query error. Href is not defined');
         }
 
-        $additionalQuery = "";
+        $additionalQuery = '';
 
         if ($requiresToken) {
-            $query["access_token"] = $this->getToken();
-            $additionalQuery = "?";
+            $query['access_token'] = $this->getToken();
+            $additionalQuery = '?';
             $additionalQuery .= http_build_query($query);
         }
 
@@ -170,15 +167,9 @@ class Base
             503 => 'Service unavailable',
         ];
 
-        try {
-            if ($code != 200 && $code != 204) {
-                $error = $errors[$code] ? $errors[$code] : 'Unknown error';
-                throw new Exception("ProfitBase connection error ($error)", $code);
-            }
-        } catch (Exception $e) {
-            echo $e->getMessage();
-            echo "<br>";
-            echo "Error code: " . $e->getCode();
+        if ($code != 200 && $code != 204) {
+            $error = !empty($errors[$code]) ? $errors[$code] : 'Unknown error';
+            throw new Exception("ProfitBase connection error ($error)", $code);
         }
     }
 }
