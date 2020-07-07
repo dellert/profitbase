@@ -67,7 +67,9 @@ class Base
             fwrite($tokenDataResource, $tokenDataEncoded);
             fclose($tokenDataResource);
 
-            return $tokenDataDecoded['access_token'];
+            if (!empty($tokenDataDecoded['access_token'])) {
+                return $tokenDataDecoded['access_token'];
+            }
         }
     }
 
