@@ -6,9 +6,9 @@ use Exception;
 
 /**
  * Class Base - содержим методы хелперы, для работы пакета.
+ *
  * @package Meowto16\ProfitBase
  */
-
 class Base
 {
     private $API_KEY;
@@ -48,12 +48,13 @@ class Base
         // Check local file
         $tokenData = file_get_contents($authorizeDataFile);
         $tokenDataDecoded = json_decode($tokenData, true);
-        if (date('U') - $tokenDataDecoded["time_of_receive"] < $tokenDataDecoded["remaining_time"]) {
+
+        if (!empty($tokenDataDecoded["remaining_time"]) && date('U') - $tokenDataDecoded["time_of_receive"] < $tokenDataDecoded["remaining_time"]) {
             return $tokenDataDecoded['access_token'];
-        } // If access token time is up
+        }  // If access token time is up
         else {
             $response = $this->postQueryTo('/authentication', [
-                'type' => 'api-app',
+                'type'        => 'api-app',
                 'credentials' => [
                     'pb_api_key' => $this->API_KEY
                 ]
@@ -97,7 +98,7 @@ class Base
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $link);
         curl_setopt($ch, CURLOPT_HEADER, 0);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type:application/json']);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
         $out = curl_exec($ch);
@@ -135,7 +136,7 @@ class Base
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $link);
         curl_setopt($ch, CURLOPT_HEADER, 0);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type:application/json']);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params));
@@ -156,7 +157,7 @@ class Base
 
     private function checkResponseCode($code)
     {
-        $errors = array(
+        $errors = [
             301 => 'Moved permanently',
             400 => 'Bad request',
             401 => 'Unauthorized',
@@ -165,7 +166,7 @@ class Base
             500 => 'Internal server error',
             502 => 'Bad gateway',
             503 => 'Service unavailable',
-        );
+        ];
 
         try {
             if ($code != 200 && $code != 204) {
